@@ -63,10 +63,10 @@ async def check_latest_video():
         # Envia mensagem específica com base no tipo de conteúdo
         if duration_seconds < 60:  # Shorts
             channel = bot.get_channel(SHORTS_CHANNEL_ID)
-            await channel.send(f"@everyone Novo Shorts no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}")
+            await channel.send(f"Novo Shorts no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
         else:  # Vídeo normal
             channel = bot.get_channel(VIDEOS_CHANNEL_ID)
-            await channel.send(f"@everyone Novo vídeo no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}")
+            await channel.send(f"Novo vídeo no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
 
         # Atualiza o último ID de vídeo
         last_video_id = latest_video_id
@@ -89,7 +89,7 @@ async def check_live_status():
         live_video_id = live_response['items'][0]['id']['videoId']
         live_notified = True
         channel = bot.get_channel(LIVE_CHANNEL_ID)
-        await channel.send(f"🔴 @everyone Estamos ao vivo! Assista aqui: https://www.youtube.com/watch?v={live_video_id}")
+        await channel.send(f"🔴 Estamos ao vivo! Assista aqui: https://www.youtube.com/watch?v={live_video_id}\n@everyone")
 
     # Reseta notificação se não houver live
     elif not live_response['items']:
