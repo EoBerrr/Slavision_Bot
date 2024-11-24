@@ -1,8 +1,10 @@
 import discord
+import isodate  # Para analisar a duração do vídeo no formato ISO 8601
 import os
 from discord.ext import commands, tasks
 from googleapiclient.discovery import build
-import isodate  # Para analisar a duração do vídeo no formato ISO 8601
+from keep_alive import keep_alive
+keep_alive()
 
 # Configurações
 DISCORD_TOKEN = os.environ['TOKEN']
