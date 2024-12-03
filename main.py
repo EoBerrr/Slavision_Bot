@@ -12,8 +12,8 @@ from keep_alive import keep_alive
 keep_alive()  # Inicializa o servidor Flask para manter o bot online
 
 # Configurações
-DISCORD_TOKEN = os.environ['TOKEN']
-YOUTUBE_API_KEY = os.environ['YOUTUBE_API_KEY']
+DISCORD_TOKEN = os.environ.get('TOKEN', '')
+YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
 CHANNEL_ID = 'UCHgPKp_8teRyUIjf6TfBWRA'
 
 # IDs dos canais do Discord
@@ -21,11 +21,21 @@ VIDEOS_CHANNEL_ID = 1311841087928795137
 SHORTS_CHANNEL_ID = 1311841087928795137
 LIVE_CHANNEL_ID = 1311841087928795137
 
+# Verificações de Ambiente
+if not DISCORD_TOKEN:
+    logging.error("Token do Discord não configurado!")
+    exit(1)
+
+if not YOUTUBE_API_KEY:
+    logging.error("Chave da API do YouTube não configurada!")
+    exit(1)
+
 # Configurar Intents
 intents = discord.Intents.default()
 intents.messages = True
 intents.guilds = True
 intents.guild_messages = True
+intents.message_content = True  # Novo intent
 
 # Inicializa o bot e a API do YouTube
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -34,6 +44,19 @@ youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 # Variáveis globais
 last_video_id = None
 live_notified = False
+
+# Função de envio de mensagem com tratamento de erros
+async def send_discord_message(channel_id, message):
+    channel = bot.get_channel(channel_id)
+    if channel is None:
+        logging.error(f"Canal {channel_id} não encontrado")
+        return
+    try:
+        await channel.send(message)
+    except discord.Forbidden:
+        logging.error(f"Sem permissão para enviar mensagem no canal {channel_id}")
+    except discord.HTTPException as e:
+        logging.error(f"Erro ao enviar mensagem: {e}")
 
 # Função de retry com backoff exponencial
 async def retry_with_backoff(func, *args, max_retries=5, initial_delay=5, backoff_factor=2):
@@ -51,6 +74,20 @@ async def retry_with_backoff(func, *args, max_retries=5, initial_delay=5, backof
             delay *= backoff_factor
 
     raise Exception(f"Número máximo de tentativas ({max_retries}) atingido para a função {func.__name__}")
+
+# Evento de inicialização do bot
+@bot.event
+async def on_ready():
+    print(f'Bot conectado como {bot.user}')
+    logging.info(f"Bot está online e monitorando o canal do YouTube!")
+    
+    # Log de verificação dos canais
+    logging.info(f"Canal de vídeos: {bot.get_channel(VIDEOS_CHANNEL_ID)}")
+    logging.info(f"Canal de shorts: {bot.get_channel(SHORTS_CHANNEL_ID)}")
+    logging.info(f"Canal de lives: {bot.get_channel(LIVE_CHANNEL_ID)}")
+    
+    # Inicia a tarefa de verificação
+    youtube_checker.start()
 
 # Função para verificar novos vídeos no canal
 async def check_latest_video():
@@ -76,11 +113,9 @@ async def check_latest_video():
             duration_seconds = isodate.parse_duration(video_duration).total_seconds()
 
             if duration_seconds < 60:  # Shorts
-                channel = bot.get_channel(SHORTS_CHANNEL_ID)
-                await channel.send(f"Novo Shorts no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
+                await send_discord_message(SHORTS_CHANNEL_ID, f"Novo Shorts no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
             else:  # Vídeo normal
-                channel = bot.get_channel(VIDEOS_CHANNEL_ID)
-                await channel.send(f"Novo vídeo no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
+                await send_discord_message(VIDEOS_CHANNEL_ID, f"Novo vídeo no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
 
             last_video_id = latest_video_id
 
@@ -96,8 +131,7 @@ async def check_live_status():
         if live_response['items'] and not live_notified:
             live_video_id = live_response['items'][0]['id']['videoId']
             live_notified = True
-            channel = bot.get_channel(LIVE_CHANNEL_ID)
-            await channel.send(f"🔴 Estamos ao vivo! Assista aqui: https://www.youtube.com/watch?v={live_video_id}\n@everyone")
+            await send_discord_message(LIVE_CHANNEL_ID, f"🔴 Estamos ao vivo! Assista aqui: https://www.youtube.com/watch?v={live_video_id}\n@everyone")
         elif not live_response['items']:
             live_notified = False
     except Exception as e:
@@ -112,6 +146,7 @@ async def youtube_checker():
     except Exception as e:
         logging.error(f"Erro no youtube_checker: {e}")
 
+# Função principal para executar o bot
 async def run_bot():
     global last_video_id, live_notified
 
