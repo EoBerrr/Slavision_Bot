@@ -59,13 +59,13 @@ async def send_discord_message(channel_id, message):
         logging.error(f"Erro ao enviar mensagem: {e}")
 
 # Função de retry com backoff exponencial
-async def retry_with_backoff(func, *args, max_retries=5, initial_delay=5, backoff_factor=2):
+async def retry_with_backoff(func, *args, max_retries=5, initial_delay=5, backoff_factor=2, **kwargs):
     retries = 0
     delay = initial_delay
 
     while retries < max_retries:
         try:
-            return await func(*args)
+            return await func(*args, **kwargs)
         except Exception as e:
             logging.error(f"Erro na função {func.__name__}: {e}")
             logging.info(f"Tentando novamente em {delay} segundos...")
