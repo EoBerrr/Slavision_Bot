@@ -1,6 +1,0 @@
-flask
-discord.py
-youtube-dl
-requests
-google-api-python-client
-isodate
