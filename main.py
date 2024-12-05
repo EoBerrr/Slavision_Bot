@@ -14,7 +14,7 @@ keep_alive()  # Inicializa o servidor Flask para manter o bot online
 # Configurações
 DISCORD_TOKEN = os.environ.get('TOKEN', '')
 YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
-CHANNEL_ID = 'UCHgPKp_8teRyUIjf6TfBWRA'
+CHANNEL_ID = 'UCY9ni94vmqT_ZLEZmnVOCoA'
 
 # IDs dos canais do Discord
 VIDEOS_CHANNEL_ID = 1311841087928795137
