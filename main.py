@@ -94,7 +94,8 @@ async def check_latest_video():
     global last_video_id
 
     try:
-        activities_response = await retry_with_backoff(youtube.activities().list, part='contentDetails', channelId=CHANNEL_ID, maxResults=1)
+        activities_request = youtube.activities().list(part='contentDetails', channelId=CHANNEL_ID, maxResults=1)
+        activities_response = activities_request.execute()  # Uso síncrono aqui
         if not activities_response.get('items'):
             logging.info("Nenhuma atividade encontrada para este canal.")
             return
@@ -107,7 +108,8 @@ async def check_latest_video():
         latest_video_id = content_details['upload']['videoId']
 
         if latest_video_id != last_video_id:
-            video_response = await retry_with_backoff(youtube.videos().list, part='contentDetails', id=latest_video_id)
+            video_request = youtube.videos().list(part='contentDetails', id=latest_video_id)
+            video_response = video_request.execute()  # Uso síncrono aqui
             video_duration = video_response['items'][0]['contentDetails']['duration']
 
             duration_seconds = isodate.parse_duration(video_duration).total_seconds()
@@ -127,7 +129,8 @@ async def check_live_status():
     global live_notified
 
     try:
-        live_response = await retry_with_backoff(youtube.search().list, part='snippet', channelId=CHANNEL_ID, eventType='live', type='video')
+        live_request = youtube.search().list(part='snippet', channelId=CHANNEL_ID, eventType='live', type='video')
+        live_response = live_request.execute()  # Uso síncrono aqui
         if live_response['items'] and not live_notified:
             live_video_id = live_response['items'][0]['id']['videoId']
             live_notified = True

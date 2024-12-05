@@ -2,5 +2,7 @@ flask
 discord.py
 youtube-dl
 requests
-google-api-python-client
 isodate
+google-auth
+google-auth-oauthlib
+google-api-python-client
