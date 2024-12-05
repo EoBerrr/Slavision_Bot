@@ -35,7 +35,7 @@ intents = discord.Intents.default()
 intents.messages = True
 intents.guilds = True
 intents.guild_messages = True
-intents.message_content = True  # Novo intent
+intents.message_content = True
 
 # Inicializa o bot e a API do YouTube
 bot = commands.Bot(command_prefix='!', intents=intents)
