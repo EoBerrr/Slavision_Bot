@@ -8,6 +8,7 @@ import random
 from discord.ext import commands, tasks
 from googleapiclient.discovery import build
 from keep_alive import keep_alive
+from datetime import datetime
 
 keep_alive()  # Inicializa o servidor Flask para manter o bot online
 
@@ -124,6 +125,26 @@ async def check_latest_video():
     except Exception as e:
         logging.error(f"Erro ao verificar novos vídeos: {e}")
 
+# Função para verificar se estamos no horário permitido para buscar lives
+def is_live_check_allowed():
+    """
+    Verifica se o dia e o horário atuais permitem a busca por lives.
+    - Sextas, sábados e domingos
+    - Entre 19:00 e 22:10
+    """
+    now = datetime.now()
+    current_day = now.weekday()  # 0 = Segunda-feira, 6 = Domingo
+    current_time = now.time()
+
+    # Dias permitidos: sexta (4), sábado (5), domingo (6)
+    if current_day in [4, 5, 6]:
+        start_time = datetime.time(19, 0)  # 19:00
+        end_time = datetime.time(22, 10)  # 22:10
+
+        return start_time <= current_time <= end_time
+
+    return False
+
 # Função para verificar se há uma transmissão ao vivo ativa
 async def check_live_status():
     global live_notified
@@ -145,7 +166,13 @@ async def check_live_status():
 async def youtube_checker():
     try:
         await check_latest_video()
-        await check_live_status()
+
+        # Verifica se estamos no horário permitido antes de buscar lives
+        if is_live_check_allowed():
+            await check_live_status()
+        else:
+            logging.info("Fora do horário permitido para verificar lives.")
+
     except Exception as e:
         logging.error(f"Erro no youtube_checker: {e}")
 
