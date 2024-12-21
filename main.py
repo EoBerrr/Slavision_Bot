@@ -8,7 +8,7 @@ import random
 from discord.ext import commands, tasks
 from googleapiclient.discovery import build
 from keep_alive import keep_alive
-from datetime import datetime
+from datetime import datetime, time
 
 keep_alive()  # Inicializa o servidor Flask para manter o bot online
 
@@ -138,8 +138,8 @@ def is_live_check_allowed():
 
     # Dias permitidos: sexta (4), sábado (5), domingo (6)
     if current_day in [4, 5, 6]:
-        start_time = datetime.time(19, 0)  # 19:00
-        end_time = datetime.time(22, 10)  # 22:10
+        start_time = time(19, 0)  # 19:00
+        end_time = time(22, 10)  # 22:10
 
         return start_time <= current_time <= end_time
 
