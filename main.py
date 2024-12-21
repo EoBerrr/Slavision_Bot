@@ -8,7 +8,7 @@ import random
 from discord.ext import commands, tasks
 from googleapiclient.discovery import build
 from keep_alive import keep_alive
-from datetime import datetime, time
+from datetime import datetime, time, timedelta, timezone
 
 keep_alive()  # Inicializa o servidor Flask para manter o bot online
 
@@ -132,7 +132,9 @@ def is_live_check_allowed():
     - Sextas, sábados e domingos
     - Entre 19:00 e 22:10
     """
-    now = datetime.now()
+    now_utc = datetime.now(timezone.utc)  # Hora atual em UTC
+    now = now_utc - timedelta(hours=3)  # Converter para GMT-3
+
     current_day = now.weekday()  # 0 = Segunda-feira, 6 = Domingo
     current_time = now.time()
 
