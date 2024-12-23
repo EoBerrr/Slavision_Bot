@@ -115,7 +115,7 @@ async def check_latest_video():
 
             duration_seconds = isodate.parse_duration(video_duration).total_seconds()
 
-            if duration_seconds < 60:  # Shorts
+            if duration_seconds <= 180:  # Shorts
                 await send_discord_message(SHORTS_CHANNEL_ID, f"Novo Shorts no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
             else:  # Vídeo normal
                 await send_discord_message(VIDEOS_CHANNEL_ID, f"Novo vídeo no canal! Assista aqui: https://www.youtube.com/watch?v={latest_video_id}\n@everyone")
