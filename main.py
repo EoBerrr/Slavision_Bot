@@ -42,7 +42,7 @@ async def on_ready():
     print(f'Bot conectado como {bot.user}')
     logging.info(f"Bot está online e monitorando o canal do YouTube!")
     
-    youtube_checker = YouTubeMonitor(
+    youtube_checker = YouTubeChecker(
         bot,
         YOUTUBE_API_KEY,
         CHANNEL_ID,
