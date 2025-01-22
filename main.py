@@ -4,7 +4,7 @@ import asyncio
 import logging
 from discord.ext import commands
 from keep_alive import keep_alive
-from youtube_checker import YouTubeMonitor
+from youtube_checker import YouTubeChecker
 
 # Configurações
 DISCORD_TOKEN = os.environ.get('TOKEN', '')
