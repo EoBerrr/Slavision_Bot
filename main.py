@@ -4,17 +4,24 @@ import asyncio
 import logging
 from discord.ext import commands
 from keep_alive import keep_alive
-
-# Importar funcionalidades separadas
-from youtube_checker import start_youtube_checker
-from role_selector import handle_role_selection
+from youtube_checker import YouTubeMonitor
 
 # Configurações
 DISCORD_TOKEN = os.environ.get('TOKEN', '')
-default_cargos = ["Guerreiro", "Mago", "Arqueiro", "Ladino", "Bardo"]
+YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
+CHANNEL_ID = 'UCY9ni94vmqT_ZLEZmnVOCoA'
+VIDEOS_CHANNEL_ID = 1308975523116093490
+SHORTS_CHANNEL_ID = 1300538214884315166
+LIVE_CHANNEL_ID = 1308975573338554368
 
-# Inicializa o servidor Flask para manter o bot online
-keep_alive()
+# Verificações de Ambiente
+if not DISCORD_TOKEN:
+    logging.error("Token do Discord não configurado!")
+    exit(1)
+
+if not YOUTUBE_API_KEY:
+    logging.error("Chave da API do YouTube não configurada!")
+    exit(1)
 
 # Configurar Intents
 intents = discord.Intents.default()
@@ -26,21 +33,27 @@ intents.message_content = True
 # Inicializa o bot
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+# Inicializa o monitor do YouTube
+youtube_checker = None
+
 @bot.event
 async def on_ready():
+    global youtube_checker
     print(f'Bot conectado como {bot.user}')
-    logging.info(f"Bot está online e pronto para interagir!")
+    logging.info(f"Bot está online e monitorando o canal do YouTube!")
     
-    # Inicia a verificação do YouTube
-    start_youtube_checker(bot)
+    youtube_checker = YouTubeMonitor(
+        bot,
+        YOUTUBE_API_KEY,
+        CHANNEL_ID,
+        VIDEOS_CHANNEL_ID,
+        SHORTS_CHANNEL_ID,
+        LIVE_CHANNEL_ID
+    )
+    youtube_checker.start_monitoring.start()
 
-# Comando para iniciar a seleção de cargos
-@bot.command()
-async def selecionar_cargos(ctx):
-    await handle_role_selection(ctx, bot, default_cargos)
-
-# Função principal para executar o bot
 async def run_bot():
+    keep_alive()
     while True:
         try:
             await bot.start(DISCORD_TOKEN)
