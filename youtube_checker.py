@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime, time, timedelta, timezone
 import discord
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from discord.ext import tasks
 
 def is_within_schedule():
@@ -23,28 +24,35 @@ class YouTubeChecker:
         self.live_channel_id = live_channel_id
         self.youtube = build('youtube', 'v3', developerKey=self.youtube_api_key)
         self.monitoring_task = None
+        self.request_count = 0
+        self.quota_limit_reached = False
+        self.quota_reset_time = None
 
     async def send_discord_message(self, channel_id, message):
-        channel = self.bot.get_channel(channel_id)
-        if channel is None:
-            logging.error(f"⚠️ Canal {channel_id} não encontrado! Verifique se o ID está correto.")
-            return
         try:
-            logging.info(f"✅ Enviando mensagem para o canal {channel_id}: {message}")
+            channel = self.bot.get_channel(channel_id)
             await channel.send(message)
-        except discord.Forbidden:
-            logging.error(f"🚫 Sem permissão para enviar mensagens no canal {channel_id}.")
-        except discord.HTTPException as e:
+        except Exception as e:
             logging.error(f"❌ Erro ao enviar mensagem: {e}")
 
-    @tasks.loop(minutes=10)  # Verificar a cada 10 minutos
+    @tasks.loop(minutes=10)
     async def check_lives(self):
+        if self.quota_limit_reached:
+            current_time = datetime.now()
+            if current_time >= self.quota_reset_time:
+                self.quota_limit_reached = False
+                self.request_count = 0
+            else:
+                logging.info(f"⏳ Quota da API excedida. Próxima tentativa em: {self.quota_reset_time}")
+                return
+
         if not is_within_schedule():
             logging.info("⏳ Fora do horário permitido para verificar lives.")
             return
 
         try:
-            logging.info("🔍 Verificando lives no canal do YouTube...")
+            self.request_count += 1
+            logging.info(f"🔍 Verificando lives (Requisição #{self.request_count})")
 
             request = self.youtube.search().list(
                 part="snippet",
@@ -66,8 +74,16 @@ class YouTubeChecker:
 
                 await self.send_discord_message(self.live_channel_id, f"🔴 **Live Agora!** {video_title}\n{video_url}")
 
+        except HttpError as e:
+            if e.resp.status == 403:
+                logging.error("❌ Cota da API do YouTube excedida")
+                self.quota_limit_reached = True
+                # Define o tempo de reset para 24 horas a partir de agora
+                self.quota_reset_time = datetime.now() + timedelta(hours=24)
+            else:
+                logging.error(f"❌ Erro na API do YouTube: {e}")
         except Exception as e:
-            logging.error(f"❌ Erro ao verificar lives: {e}")
+            logging.error(f"❌ Erro inesperado: {e}")
 
     async def start_monitoring(self):
         await self.bot.wait_until_ready()

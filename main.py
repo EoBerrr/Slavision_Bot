@@ -36,8 +36,16 @@ async def run_bot():
     while True:
         try:
             await bot.start(DISCORD_TOKEN)
+        except discord.HTTPException as e:
+            logging.error(f"❌ Erro de HTTP ao executar o bot: {e}")
+            logging.info("🔄 Reconectando em 5 minutos...")
+            await asyncio.sleep(300)
+        except discord.LoginFailure as e:
+            logging.error(f"❌ Falha de login: {e}")
+            logging.info("🛑 Erro crítico de autenticação. Verifique o token.")
+            break
         except Exception as e:
-            logging.error(f"❌ Erro ao executar o bot: {e}")
+            logging.error(f"❌ Erro inesperado: {e}")
             logging.info("🔄 Reconectando em 5 minutos...")
             await asyncio.sleep(300)  # Espera 5 minutos antes de tentar reconectar
 
