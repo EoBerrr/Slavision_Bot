@@ -2,6 +2,7 @@ import os
 import logging
 import asyncio
 from datetime import datetime, time, timedelta, timezone
+import discord
 from googleapiclient.discovery import build
 from discord.ext import tasks
 
